@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"runtime"
 	"io"
 	"os"
 	"os/signal"
@@ -389,13 +390,25 @@ func init() {
 		trustedProxies = cfg.TrustedProxies
 
 		// Abspath for webroot
-		// Trim trailing / for linux/mac and \ for windows
-		webroot = strings.TrimSuffix(webroot, "/")
-		webroot = strings.TrimSuffix(webroot, "\\")
+		// Handle Windows drive letter root special case
+		if runtime.GOOS == "windows" {
+			if len(webroot) == 2 && webroot[1] == ':' {
+				webroot += "\\"
+			}
+		}
+
+		webroot = filepath.Clean(webroot)
+
 		if !filepath.IsAbs(webroot) {
-			webroot, err = filepath.Abs(filepath.Join(wd, webroot))
+			combinedPath := filepath.Join(wd, webroot)
+			webroot, err = filepath.Abs(combinedPath)
 			if err != nil {
-				logger.Fatalf("Webroot cannot be constructed: %+v", err)
+				logger.Fatalf("Webroot cannot be constructed from relative path: %+v", err)
+			}
+		} else {
+			webroot, err = filepath.Abs(webroot)
+			if err != nil {
+				logger.Fatalf("Webroot absolute path is invalid or cannot be resolved: %+v", err)
 			}
 		}
 
