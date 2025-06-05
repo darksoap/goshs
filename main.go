@@ -392,8 +392,8 @@ func init() {
 		// Abspath for webroot
 		// Handle Windows drive letter root special case
 		if runtime.GOOS == "windows" {
-			if len(webroot) == 2 && webroot[1] == ':' {
-				webroot += "\\"
+			if len(wd) == 2 && wd[1] == ':' {
+				wd += "\\"
 			}
 		}
 
